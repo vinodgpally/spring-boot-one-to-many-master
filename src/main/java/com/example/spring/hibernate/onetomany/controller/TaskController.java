@@ -1,9 +1,8 @@
 package com.example.spring.hibernate.onetomany.controller;
 
-import com.example.spring.hibernate.onetomany.exception.ResourceNotFoundException;
+import com.example.spring.hibernate.onetomany.dto.TaskDTO;
 import com.example.spring.hibernate.onetomany.model.Task;
-import com.example.spring.hibernate.onetomany.repository.TaskRepository;
-import com.example.spring.hibernate.onetomany.repository.UserRepository;
+import com.example.spring.hibernate.onetomany.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,120 +22,51 @@ import java.util.List;
 @RequestMapping("/api")
 public class TaskController {
 
-  @Autowired
-  private UserRepository userRepository;
+    @Autowired
+    private TaskService taskService;
 
-  @Autowired
-  private TaskRepository taskRepository;
-
-  @GetMapping("/users/{userId}/tasks")
-  public ResponseEntity<List<Task>> getAllTasksByUserId(@PathVariable(value = "userId") Long userId) {
-    if (!userRepository.existsById(userId)) {
-      throw new ResourceNotFoundException("Not found User with id = " + userId);
+    @GetMapping("/user/{userId}/task")
+    public ResponseEntity<List<Task>> getAllTasksByUserId(@PathVariable(value = "userId") Long userId) {
+        return new ResponseEntity<>(taskService.getAllTasksByUserId(userId), HttpStatus.OK);
     }
 
-    List<Task> task = taskRepository.findByUserId(userId);
-    return new ResponseEntity<>(task, HttpStatus.OK);
-  }
-
-  @GetMapping("/tasks/{taskId}")
-  public ResponseEntity<Task> getTasksByTaskId(@PathVariable(value = "taskId") Long taskId) {
-    Task task = taskRepository.findById(taskId)
-        .orElseThrow(() -> new ResourceNotFoundException("Not found Task with id = " + taskId));
-
-    return new ResponseEntity<>(task, HttpStatus.OK);
-  }
-
-  @GetMapping("/users/{userId}/tasks/{taskId}")
-  public ResponseEntity<Task> getTasksByIdAndUserId(@PathVariable(value = "userId") Long userId, @PathVariable(value = "taskId") Long taskId) {
-//    Task task = taskRepository.findById(taskId)
-//            .orElseThrow(() -> new ResourceNotFoundException("Not found Task with id = " + taskId));
-
-    Task task = taskRepository.findByIdAndUserId(taskId, userId).orElseThrow(() -> new ResourceNotFoundException("Not found Task with id = " + taskId));;
-
-    return new ResponseEntity<>(task, HttpStatus.OK);
-  }
-
-  @PostMapping("/users/{userId}/tasks")
-  public ResponseEntity<Task> createTask(@PathVariable(value = "userId") Long userId,
-      @RequestBody Task taskRequest) {
-    Task task = userRepository.findById(userId).map(user -> {
-      taskRequest.setUser(user);
-      return taskRepository.save(taskRequest);
-    }).orElseThrow(() -> new ResourceNotFoundException("Not found User with id = " + userId));
-
-    return new ResponseEntity<>(task, HttpStatus.CREATED);
-  }
-
-//  @PutMapping("/tasks/{id}")
-//  public ResponseEntity<Task> updateTask(@PathVariable("id") long id, @RequestBody Task taskRequest) {
-//    Task task = taskRepository.findById(id)
-//        .orElseThrow(() -> new ResourceNotFoundException("TaskId " + id + "not found"));
-//
-//    task.setDescription(taskRequest.getDescription());
-//    task.setName(taskRequest.getName());
-//    task.setCreateDate(taskRequest.getCreateDate());
-//
-//
-//    return new ResponseEntity<>(taskRepository.save(task), HttpStatus.OK);
-//  }
-
-  @PutMapping("/users/{userId}/tasks/{taskId}")
-  public ResponseEntity<Task> updateTask(@PathVariable("userId") long userId, @RequestBody Task taskRequest,
-                                         @PathVariable("taskId") long taskId) {
-//    if (!userRepository.existsById(userId)) {
-//      throw new ResourceNotFoundException("Not found User with id = " + userId);
-//    }
-
-    Task task = taskRepository.findByIdAndUserId(taskId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Not found Task with id = " + taskId));;
-
-//    List<Task> tasks = taskRepository.findByUserId(userId);
-//    Stream<Task> taskStream = tasks.stream().filter(t -> (t.getId().equals(taskId) && t.getUser().getId().equals(userId)));
-//    Optional<Task> first = taskStream.findFirst();
-
-//    task = taskRepository.findById(task.getId())
-//            .orElseThrow(() -> new ResourceNotFoundException("TaskId " + id + "not found"));
-
-      if(null != taskRequest.getDescription())
-        task.setDescription(taskRequest.getDescription());
-    if(null != taskRequest.getName())
-      task.setName(taskRequest.getName());
-    if(null != taskRequest.getCreateDate())
-      task.setCreateDate(taskRequest.getCreateDate());
-//    } else
-//      throw new ResourceNotFoundException("TaskId " + taskId + "not found");
-
-    return new ResponseEntity<>(taskRepository.save(task), HttpStatus.OK);
-  }
-
-  @DeleteMapping("/tasks/{id}")
-  public ResponseEntity<HttpStatus> deleteTask(@PathVariable("id") long id) {
-    taskRepository.deleteById(id);
-
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-  @DeleteMapping("/users/{userId}/tasks/{taskId}")
-  public ResponseEntity<HttpStatus> deleteTask(@PathVariable("userId") long userId, @PathVariable("taskId") long taskId) {
-    if (!userRepository.existsById(userId)) {
-      throw new ResourceNotFoundException("Not found User with id = " + userId);
+    @GetMapping("/task/{taskId}")
+    public ResponseEntity<Task> getTasksByTaskId(@PathVariable(value = "taskId") Long taskId) {
+        return new ResponseEntity<>(taskService.getTasksByTaskId(taskId), HttpStatus.OK);
     }
 
-    taskRepository.deleteById(taskId);
-
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
-
-
-  
-  @DeleteMapping("/users/{userId}/tasks")
-  public ResponseEntity<List<Task>> deleteAllTasksOfUser(@PathVariable(value = "userId") Long userId) {
-    if (!userRepository.existsById(userId)) {
-      throw new ResourceNotFoundException("Not found User with id = " + userId);
+    @GetMapping("/user/{userId}/task/{taskId}")
+    public ResponseEntity<Task> getTasksByIdAndUserId(@PathVariable(value = "userId") Long userId, @PathVariable(value = "taskId") Long taskId) {
+        return new ResponseEntity<>(taskService.getTasksByIdAndUserId(userId, taskId), HttpStatus.OK);
     }
 
-    taskRepository.deleteByUserId(userId);
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-  }
+    @PostMapping("/user/{userId}/task")
+    public ResponseEntity<Task> createTask(@PathVariable(value = "userId") Long userId, @RequestBody TaskDTO taskRequest) {
+        return new ResponseEntity<>(taskService.createTask(userId, taskRequest), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/user/{userId}/task/{taskId}")
+    public ResponseEntity<Task> updateTask(@PathVariable("userId") long userId, @RequestBody TaskDTO taskRequest,
+                                           @PathVariable("taskId") long taskId) {
+        return new ResponseEntity<>(taskService.updateTask(userId, taskRequest, taskId), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/task/{id}")
+    public ResponseEntity<HttpStatus> deleteTask(@PathVariable("id") long id) {
+        taskService.deleteTask(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @DeleteMapping("/user/{userId}/task/{taskId}")
+    public ResponseEntity<HttpStatus> deleteTask(@PathVariable("userId") long userId, @PathVariable("taskId") long taskId) {
+        taskService.deleteTask(userId, taskId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+    @DeleteMapping("/user/{userId}/task")
+    public ResponseEntity<HttpStatus> deleteAllTasksOfUser(@PathVariable(value = "userId") Long userId) {
+        taskService.deleteAllTasksOfUser(userId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }

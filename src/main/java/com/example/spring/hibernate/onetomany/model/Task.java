@@ -38,7 +38,7 @@ public class Task {
     @Column(name="description")
     private String description;
 
-    @Column(name="status")
+    @Column(name="status", columnDefinition = "default 'pending'")
     @JsonIgnore
     private String status;
 
@@ -100,6 +100,12 @@ public class Task {
         this.description = description;
         this.createDate = createDate;
         this.status = status;
+    }
+
+    public Task(String name, String description, Date createDate) {
+        this.name = name;
+        this.description = description;
+        this.createDate = createDate;
     }
 
     public Task() {
